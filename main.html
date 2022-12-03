@@ -1,0 +1,374 @@
+﻿<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="vue.global.js"></script>
+<link rel="stylesheet" href="dialog.css">
+<script>
+	/*-- JS dialog example code --*/
+	function openDialog(content) {
+		document.getElementById('dlgContent').innerHTML=content;
+		document.getElementsByClassName('modal')[0].style.display = "block";
+		document.getElementById('dlg_close_btn').style.display = "block";		
+	}
+	
+	function closeDialog() {
+		document.getElementById('dlgContent').innerHTML="";
+		document.getElementsByClassName('modal')[0].style.display = "none";
+	}
+</script>
+</head>
+
+<body >
+<div id='main'>
+我的ID：<input type="text" v-model="uID"></hr>
+	<input type='button' value="新增拍賣" @click='setView("add")'>
+	<input type='button' value="正在拍賣中的商品" @click='loadList()'>
+	<input type='button' value="我目前的拍賣商品" @click='showNowAuction()'>
+	<input type='button' value="我目前的下標狀態" @click='loadBid("uID")'>
+	<input type='button' value="我的拍賣歷史紀錄" @click='showAuction()'>
+	<input type='button' value="我的下標歷史紀錄" @click='showRecord()'>
+<div id="listView" v-if="view=='list'">
+	<h2>正在拍賣中的商品</h2>
+	<hr>
+	  <table>
+	  <thead>
+		<tr>
+		  <th>商品編號</th>
+		  <th>商品名稱</th>
+		  <th>剩餘時間</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr v-for='rec in listData' >
+			<td>{{ rec.oid }}</td>
+			<td>{{ rec.name }}</td>
+			<td>{{ rec.expire }}</td>
+			<td> <button @click='setActiveOID(rec.oid, rec.price)'>下標</button>
+			<td> <button @click='setDetail(rec.oid)'>內容</button>
+			</td>
+		</tr>
+	</tbody>
+</table>
+<div v-if="activeOID == 1">商品編號:{{myoID}} 下標金額:<input type='text' v-model="myPrice"> <button @click='bid(myPrice,myoID)'>下標</button></div>
+<div v-if="checkDetail == 1" v-for='rec in detail'>商品編號:{{ myoID }} 拍賣者:{{ rec.uID }} 商品名稱:{{ rec.name }} 商品內容:{{ rec.text }} 目前最高價:{{ rec.price }} 剩餘時間:{{ rec.expire }}</div>
+</div>
+<div id="showView" v-if="view=='show'">
+	<h2>我的下標歷史紀錄</h2>
+		<hr>
+			<table>
+			<thead>
+				<tr>
+				  <th>商品編號</th>
+				  <th>商品名稱</th>
+				  <th>商品內容</th>
+				  <th>結標時間</th>
+				  <th>你的出價</th>
+				  <th>最高出價</th>
+				  <th>是否得標</th>
+				  <th>得標者</th>
+				</tr>
+			  </thead>
+			  <tbody>
+		<tr v-for='rec in listHistory' >
+			<td>{{ rec.oid }}</td>
+			<td>{{ rec.name }}</td>
+			<td>{{ rec.text }}</td>
+			<td>{{ rec.closeTime }}</td>
+			<td>{{ rec.myPrice }}</td>
+			<td>{{ rec.maxPrice }}</td>
+			<td>{{ rec.theMax }}</td>
+			<td>{{ rec.winner }}</td>
+		</tr>
+	   </tbody>
+	</table>
+</div>
+<div id="loadBid" v-if="view=='load'">
+	<h2>我目前的下標狀態</h2>
+	<hr>
+		<table>
+		<thead>
+			<tr>
+			  <th>商品編號</th>
+			  <th>商品名稱</th>
+			  <th>商品內容</th>
+			  <th>你的出價</th>
+			  <th>目前最高價</th>
+			  <th>是否為最高價</th>
+			  <th>剩餘時間</th>
+			</tr>
+		  </thead>
+		  <tbody>
+	<tr v-for='rec in myBid' >
+		<td>{{ rec.oid }}</td>
+		<td>{{ rec.name }}</td>
+		<td>{{ rec.text }}</td>
+		<td>{{ rec.myPrice }}</td>
+		<td>{{ rec.maxPrice }}</td>
+		<td>{{ rec.theMax }}</td>
+		<td>{{ rec.lessTime }}</td>
+		</td>
+	</tr>
+   </tbody>
+</table>
+</div>
+<div id="showNowAuction" v-if="view=='nowAuction'">
+	<h2>我目前的拍賣商品</h2>
+	<hr>
+	<table>
+		<thead>
+			<tr>
+			  <th>商品編號</th>
+			  <th>商品名稱</th>
+			  <th>商品內容</th>
+			  <th>剩餘時間</th>
+			  <th>目前最高價</th>
+			  <th>最高出價者</th>
+			</tr>
+		  </thead>
+		  <tbody>
+	<tr v-for='rec in myNowAuction' >
+		<td>{{ rec.oid }}</td>
+		<td>{{ rec.name }}</td>
+		<td>{{ rec.text }}</td>
+		<td>{{ rec.expire }}</td>
+		<td>{{ rec.price }}</td>
+		<td>{{ rec.uid }}</td>
+		</td>
+	</tr>
+   </tbody>
+</table>
+</div>
+<div id="showAuction" v-if="view=='auction'">
+	<h2>我的拍賣歷史紀錄</h2>
+	<hr>
+	<table>
+		<thead>
+			<tr>
+			  <th>商品編號</th>
+			  <th>商品名稱</th>
+			  <th>商品內容</th>
+			  <th>結標時間</th>
+			  <th>結標金額</th>
+			  <th>得標者</th>
+			</tr>
+		  </thead>
+		  <tbody>
+	<tr v-for='rec in myAuction' >
+		<td>{{ rec.oid }}</td>
+		<td>{{ rec.name }}</td>
+		<td>{{ rec.text }}</td>
+		<td>{{ rec.expire }}</td>
+		<td>{{ rec.price }}</td>
+		<td>{{ rec.uid }}</td>
+		</td>
+	</tr>
+   </tbody>
+</table>
+</div>
+
+<div id='addView' v-if="view=='add'">
+<h2>新增拍賣</h2>
+	商品名稱:<input type='text' v-model='dat.name' /><br/>
+	商品內容:<input type='text' v-model='dat.text' /><br/>
+	<input type='button' v-on:click='saveRecord()' value='新增'>
+	<input type='button' v-on:click='setView("list")' value='取消'>
+</div>
+
+</div>
+<!-- JS dialog DIVs-->
+<div class="modal">
+<div class="modal-content ">
+  <div id="dlgContent"></div>
+  <br>
+	<button id="dlg_close_btn" class="Dlgbutton" onclick="closeDialog()">close</button>
+</div>
+</div>
+
+<script language="javascript">
+const vm= Vue.createApp({
+	data() {
+		return {
+			listData: [], // 拍賣中的商品
+			listHistory: [], // 我的下標歷史紀錄
+			myBid: [], // 我的下標狀態
+			myAuction: [], // 我的拍賣紀錄(已結標)
+			myNowAuction: [], // 我的拍賣紀錄(未結標)
+			detail: [], // 商品內容
+			dat: {name:'',expire:'2022-11-22',text:''},
+			view: "",
+			myPrice: 0,
+			activeOID:-1,
+			activeMaxPrice:0,
+			uID:0,
+			checkDetail:-1,
+			myoID:0,
+		}
+	},
+	methods: {
+		loadList: function () {
+			this.setView('list');
+			//return
+			let mydat = new FormData();
+			mydat.append( "act", 'getList');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson);
+				vm.listData = myJson;
+			});
+		},
+		loadBid: function () {
+			this.setView('load');
+			let mydat = new FormData();
+			mydat.append( "uID", this.uID);
+			//return
+			mydat.append( "act", 'loadBid');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				vm.myBid = myJson;
+			});
+		},
+		showAuction: function () {
+			this.setView('auction');
+			let mydat = new FormData();
+			mydat.append( "uID", this.uID);
+			mydat.append( "act", 'getAuction');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				vm.myAuction = myJson;
+			})
+		},
+		showNowAuction: function() {
+			this.setView('nowAuction');
+			let mydat = new FormData();
+			mydat.append( "uID", this.uID);
+			mydat.append( "act", 'getNowAuction');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				vm.myNowAuction = myJson;
+			})
+		},
+		showRecord: function () {
+			this.setView('show');
+			let mydat = new FormData();
+			mydat.append( "uID", this.uID);
+			//return
+			mydat.append( "act", 'getHistory');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				vm.listHistory = myJson;
+			});
+		},
+		saveRecord:	 function () {
+			let mydat = new FormData();
+			mydat.append( "dat", JSON.stringify(this.dat) );
+			mydat.append( "uID", this.uID);
+			mydat.append( "act", 'add');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				//return response.json();
+				return response.text();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				openDialog('新增成功！')
+				vm.setView("list");
+			});
+		},
+		bid: function (p,oid) {
+			if (p <= this.activeMaxPrice) {
+				openDialog('出價太低了，再高一點!');
+				return;
+			}
+			let mydat = new FormData();
+			mydat.append( "oID", oid);
+			mydat.append( "uID", this.uID);
+			mydat.append( "price", p);
+			mydat.append( "act", 'bid');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+				//return response.text();
+			})
+			.then(function(myJson) {
+			//console.log(myJson)
+			
+				openDialog("下標成功!")
+				
+				vm.activeOID=-1; //reset active object id
+				vm.loadList();
+			});
+			openDialog("輸入格式錯誤!");
+		},
+		setActiveOID: function(oID, maxPrice) {
+			this.activeOID *= -1;
+			this.myoID = oID;
+			this.activeMaxPrice=maxPrice;
+			this.myPrice=maxPrice;
+		},
+		setDetail: function(oID) {
+			this.myoID = oID;
+			this.checkDetail *= -1;
+			let mydat = new FormData();
+			mydat.append( "oID", oID);
+			mydat.append( "act", 'detail');
+			fetch('control.py',{
+				method: 'POST',
+				body: mydat											
+			})
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				//console.log(myJson)
+				vm.detail = myJson;
+			});
+
+		},
+		setView: function(viewID) {
+			this.view=viewID;
+		}
+	}
+}).mount("#main");
+//vm.loadList();
+</script>
+
+</body></html>

@@ -1,0 +1,116 @@
+﻿<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="vue.global.js"></script>
+<link rel="stylesheet" href="dialog.css">
+<script>
+	/*-- JS dialog example code --*/
+	function openDialog(content) {
+		document.getElementById('dlgContent').innerHTML=content;
+		document.getElementsByClassName('modal')[0].style.display = "block";
+		document.getElementById('dlg_close_btn').style.display = "block";		
+	}
+	
+	function closeDialog() {
+		document.getElementById('dlgContent').innerHTML="";
+		document.getElementsByClassName('modal')[0].style.display = "none";
+	}
+</script>
+</head>
+
+<body >
+<div id='main'>
+<div id="listView" v-if="view=='list'">
+	<input type='button' value="新增會員" @click='deleteRecord()'>
+	<input type='button' value="c=修改會員" @click='loadRecord(1)'>
+	<hr>
+	  <table>
+	  <thead>
+		<tr>
+		  <th>會員編號</th>
+		  <th>姓名</th>
+		  <th>電話</th>
+		  <th>-</th>
+		</tr>
+	  </thead>
+	  <tbody>
+		<tr v-for='rec in listData' >
+			<td>{{ rec.id }}-{{ rec.xid }}</td>
+			<td>{{ rec.name }}</td>
+			<td>{{ rec.phone }}</td>
+			<td><button @click='loadRecord(rec.xid)'>修改</button> 
+			<button @click='deleteRecord(rec.xid)'>刪</button> | 
+			</td>
+		</tr>
+	   </tbody>
+	</table>
+</div>
+
+
+<div id='editView' v-if="view=='edit'">
+<h1>edit view</h1>
+	會員編號:<input type='text' v-model='dat.id' disabled /><br/>
+	姓名:	<input type='text' maxlength='5' v-model='dat.name'	 /><br/>
+	性別:		<select v-model='dat.sex'  ><option value='男'>男</option><option value='女'>女</option></select><br/>
+	通訊地址: <input type='text' maxlength='36' v-model='dat.address'  /><br/>
+	手機: <input type='text' maxlength='15' v-model='dat.phone'  /><br/>
+	<hr/>
+	<input type='button' v-on:click='saveRecord()' value='Save'>
+	<input type='button' v-on:click='setView("list")' value='Cancel'>
+</div>
+</div>
+<!-- JS dialog DIVs-->
+<div class="modal">
+<div class="modal-content ">
+  <div id="dlgContent"></div>
+  <br>
+	<button id="dlg_close_btn" class="Dlgbutton" onclick="closeDialog()">close</button>
+</div>
+</div>
+
+<script language="javascript">
+const vm= Vue.createApp({
+	data() {
+		return {
+			listData: [],
+			dat: {},
+			view: ""
+		}
+	},
+	methods: {
+		loadList: function () {
+			this.setView('list');
+			return
+			fetch('control.py?act=getList')
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				vm.listData = myJson;
+			});
+		},
+		loadRecord:	 function (id) {
+			this.setView('edit');
+			fetch('control.py?act=getData&id=' + id)
+			.then(function(response) {
+				return response.json();
+			})
+			.then(function(myJson) {
+				vm.dat = myJson;
+
+			});
+		},
+		saveRecord:	 function () {
+			openDialog('Save Data');
+		},
+		deleteRecord: function () {
+			openDialog('delete Data');
+		},
+		setView: function(viewID) {
+			this.view=viewID;
+		}
+	}
+}).mount("#main");
+vm.loadList();
+</script>
+
+</body></html>
